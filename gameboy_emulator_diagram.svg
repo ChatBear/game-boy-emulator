@@ -1,0 +1,143 @@
+<svg viewBox="0 0 800 900" xmlns="http://www.w3.org/2000/svg">
+  <!-- Title -->
+  <text x="400" y="30" font-size="24" font-weight="bold" text-anchor="middle" fill="#2c3e50">
+    Game Boy Emulator Architecture
+  </text>
+  
+  <!-- Main Container -->
+  <rect x="50" y="60" width="700" height="820" fill="#ecf0f1" stroke="#34495e" stroke-width="3" rx="10"/>
+  
+  <!-- CPU Section -->
+  <g id="cpu">
+    <rect x="80" y="90" width="280" height="140" fill="#3498db" stroke="#2c3e50" stroke-width="2" rx="5"/>
+    <text x="220" y="115" font-size="18" font-weight="bold" text-anchor="middle" fill="white">
+      CPU (Sharp LR35902)
+    </text>
+    <text x="90" y="140" font-size="14" fill="white">• 8-bit CPU (Z80-like)</text>
+    <text x="90" y="160" font-size="14" fill="white">• Registers: A, B, C, D, E, F, H, L</text>
+    <text x="90" y="180" font-size="14" fill="white">• Program Counter (PC)</text>
+    <text x="90" y="200" font-size="14" fill="white">• Stack Pointer (SP)</text>
+    <text x="90" y="220" font-size="14" fill="white">• ~4.19 MHz clock speed</text>
+  </g>
+  
+  <!-- Memory Section -->
+  <g id="memory">
+    <rect x="440" y="90" width="280" height="220" fill="#e74c3c" stroke="#2c3e50" stroke-width="2" rx="5"/>
+    <text x="580" y="115" font-size="18" font-weight="bold" text-anchor="middle" fill="white">
+      Memory Map
+    </text>
+    <text x="450" y="140" font-size="13" fill="white">• 0x0000-0x7FFF: ROM (Cartridge)</text>
+    <text x="450" y="160" font-size="13" fill="white">• 0x8000-0x9FFF: VRAM (Video RAM)</text>
+    <text x="450" y="180" font-size="13" fill="white">• 0xA000-0xBFFF: External RAM</text>
+    <text x="450" y="200" font-size="13" fill="white">• 0xC000-0xDFFF: Work RAM</text>
+    <text x="450" y="220" font-size="13" fill="white">• 0xFE00-0xFE9F: OAM (Sprites)</text>
+    <text x="450" y="240" font-size="13" fill="white">• 0xFF00-0xFF7F: I/O Registers</text>
+    <text x="450" y="260" font-size="13" fill="white">• 0xFF80-0xFFFE: High RAM</text>
+    <text x="450" y="280" font-size="13" fill="white">• 0xFFFF: Interrupt Enable</text>
+    <text x="450" y="300" font-size="13" fill="white">Total: 64KB address space</text>
+  </g>
+  
+  <!-- PPU Section -->
+  <g id="ppu">
+    <rect x="80" y="340" width="280" height="160" fill="#9b59b6" stroke="#2c3e50" stroke-width="2" rx="5"/>
+    <text x="220" y="365" font-size="18" font-weight="bold" text-anchor="middle" fill="white">
+      PPU (Picture Processing Unit)
+    </text>
+    <text x="90" y="390" font-size="14" fill="white">• 160x144 pixel LCD display</text>
+    <text x="90" y="410" font-size="14" fill="white">• 4 shades of gray</text>
+    <text x="90" y="430" font-size="14" fill="white">• Background layer (32x32 tiles)</text>
+    <text x="90" y="450" font-size="14" fill="white">• Window layer</text>
+    <text x="90" y="470" font-size="14" fill="white">• 40 sprites (8x8 or 8x16 pixels)</text>
+    <text x="90" y="490" font-size="14" fill="white">• 59.7 Hz refresh rate</text>
+  </g>
+  
+  <!-- APU Section -->
+  <g id="apu">
+    <rect x="440" y="340" width="280" height="160" fill="#f39c12" stroke="#2c3e50" stroke-width="2" rx="5"/>
+    <text x="580" y="365" font-size="18" font-weight="bold" text-anchor="middle" fill="white">
+      APU (Audio Processing Unit)
+    </text>
+    <text x="450" y="390" font-size="14" fill="white">• Channel 1: Square wave + sweep</text>
+    <text x="450" y="410" font-size="14" fill="white">• Channel 2: Square wave</text>
+    <text x="450" y="430" font-size="14" fill="white">• Channel 3: Custom waveform</text>
+    <text x="450" y="450" font-size="14" fill="white">• Channel 4: Noise generator</text>
+    <text x="450" y="470" font-size="14" fill="white">• Stereo output (left/right)</text>
+    <text x="450" y="490" font-size="14" fill="white">• Volume and panning control</text>
+  </g>
+  
+  <!-- Timer Section -->
+  <g id="timer">
+    <rect x="80" y="530" width="180" height="100" fill="#1abc9c" stroke="#2c3e50" stroke-width="2" rx="5"/>
+    <text x="170" y="555" font-size="18" font-weight="bold" text-anchor="middle" fill="white">
+      Timer
+    </text>
+    <text x="90" y="580" font-size="14" fill="white">• DIV register</text>
+    <text x="90" y="600" font-size="14" fill="white">• TIMA counter</text>
+    <text x="90" y="620" font-size="14" fill="white">• Configurable speed</text>
+  </g>
+  
+  <!-- Input Section -->
+  <g id="input">
+    <rect x="290" y="530" width="180" height="100" fill="#16a085" stroke="#2c3e50" stroke-width="2" rx="5"/>
+    <text x="380" y="555" font-size="18" font-weight="bold" text-anchor="middle" fill="white">
+      Joypad Input
+    </text>
+    <text x="300" y="580" font-size="14" fill="white">• D-pad (↑↓←→)</text>
+    <text x="300" y="600" font-size="14" fill="white">• A, B buttons</text>
+    <text x="300" y="620" font-size="14" fill="white">• Start, Select</text>
+  </g>
+  
+  <!-- Cartridge Section -->
+  <g id="cartridge">
+    <rect x="500" y="530" width="220" height="100" fill="#e67e22" stroke="#2c3e50" stroke-width="2" rx="5"/>
+    <text x="610" y="555" font-size="18" font-weight="bold" text-anchor="middle" fill="white">
+      Cartridge
+    </text>
+    <text x="510" y="580" font-size="14" fill="white">• ROM (game code)</text>
+    <text x="510" y="600" font-size="14" fill="white">• RAM (save data)</text>
+    <text x="510" y="620" font-size="14" fill="white">• MBC (Memory Bank Controller)</text>
+  </g>
+  
+  <!-- Interrupts Section -->
+  <g id="interrupts">
+    <rect x="80" y="660" width="640" height="90" fill="#c0392b" stroke="#2c3e50" stroke-width="2" rx="5"/>
+    <text x="400" y="685" font-size="18" font-weight="bold" text-anchor="middle" fill="white">
+      Interrupt System
+    </text>
+    <text x="90" y="710" font-size="14" fill="white">• V-Blank (vertical blank) - most important for game timing</text>
+    <text x="90" y="730" font-size="14" fill="white">• LCD STAT (LCD status) - Serial transfer - Timer overflow - Joypad press</text>
+  </g>
+  
+  <!-- Timing Section -->
+  <g id="timing">
+    <rect x="80" y="780" width="640" height="80" fill="#7f8c8d" stroke="#2c3e50" stroke-width="2" rx="5"/>
+    <text x="400" y="805" font-size="18" font-weight="bold" text-anchor="middle" fill="white">
+      Timing &amp; Synchronization
+    </text>
+    <text x="90" y="830" font-size="14" fill="white">• Everything runs in cycles (machine cycles or T-cycles)</text>
+    <text x="90" y="850" font-size="14" fill="white">• Must synchronize CPU, PPU, APU, and Timer to maintain accurate emulation</text>
+  </g>
+  
+  <!-- Connecting arrows -->
+  <defs>
+    <marker id="arrowhead" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+      <polygon points="0 0, 10 3, 0 6" fill="#2c3e50"/>
+    </marker>
+  </defs>
+  
+  <!-- CPU to Memory -->
+  <line x1="360" y1="160" x2="440" y2="160" stroke="#2c3e50" stroke-width="2" marker-end="url(#arrowhead)"/>
+  <text x="390" y="150" font-size="12" fill="#2c3e50">read/write</text>
+  
+  <!-- Memory to PPU -->
+  <line x1="520" y1="310" x2="360" y2="390" stroke="#2c3e50" stroke-width="2" marker-end="url(#arrowhead)"/>
+  <text x="420" y="340" font-size="12" fill="#2c3e50">VRAM/OAM</text>
+  
+  <!-- CPU to PPU -->
+  <line x1="220" y1="230" x2="220" y2="340" stroke="#2c3e50" stroke-width="2" marker-end="url(#arrowhead)"/>
+  <text x="230" y="290" font-size="12" fill="#2c3e50">control</text>
+  
+  <!-- CPU to APU -->
+  <line x1="360" y1="200" x2="520" y2="380" stroke="#2c3e50" stroke-width="2" marker-end="url(#arrowhead)"/>
+  <text x="420" y="280" font-size="12" fill="#2c3e50">I/O regs</text>
+</svg>

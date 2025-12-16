@@ -1,0 +1,114 @@
+<svg viewBox="0 0 1200 800" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="1200" height="800" fill="#f8f9fa"/>
+  
+  <!-- Title -->
+  <text x="600" y="40" font-size="28" font-weight="bold" text-anchor="middle" fill="#2c3e50">
+    Game Boy Emulator Architecture
+  </text>
+  
+  <!-- Main Emulator Container -->
+  <rect x="50" y="80" width="1100" height="680" fill="none" stroke="#34495e" stroke-width="3" rx="10"/>
+  <text x="600" y="110" font-size="20" font-weight="bold" text-anchor="middle" fill="#34495e">
+    Emulator Core
+  </text>
+  
+  <!-- CPU Block -->
+  <rect x="480" y="140" width="240" height="120" fill="#3498db" stroke="#2980b9" stroke-width="2" rx="8"/>
+  <text x="600" y="175" font-size="18" font-weight="bold" text-anchor="middle" fill="white">CPU (Sharp LR35902)</text>
+  <text x="600" y="200" font-size="13" text-anchor="middle" fill="white">• 8-bit processor</text>
+  <text x="600" y="220" font-size="13" text-anchor="middle" fill="white">• Executes instructions</text>
+  <text x="600" y="240" font-size="13" text-anchor="middle" fill="white">• 4.194 MHz clock</text>
+  
+  <!-- MMU Block -->
+  <rect x="480" y="290" width="240" height="100" fill="#9b59b6" stroke="#8e44ad" stroke-width="2" rx="8"/>
+  <text x="600" y="320" font-size="18" font-weight="bold" text-anchor="middle" fill="white">MMU</text>
+  <text x="600" y="340" font-size="13" text-anchor="middle" fill="white">Memory Management</text>
+  <text x="600" y="360" font-size="13" text-anchor="middle" fill="white">• Address routing</text>
+  <text x="600" y="380" font-size="13" text-anchor="middle" fill="white">• Banking control</text>
+  
+  <!-- Arrow from CPU to MMU -->
+  <path d="M 600 260 L 600 290" stroke="#2c3e50" stroke-width="3" fill="none" marker-end="url(#arrowhead)"/>
+  <text x="620" y="280" font-size="12" fill="#2c3e50">reads/writes</text>
+  
+  <!-- PPU Block -->
+  <rect x="100" y="440" width="280" height="140" fill="#e74c3c" stroke="#c0392b" stroke-width="2" rx="8"/>
+  <text x="240" y="470" font-size="18" font-weight="bold" text-anchor="middle" fill="white">PPU (Graphics)</text>
+  <text x="240" y="495" font-size="13" text-anchor="middle" fill="white">• Renders pixels</text>
+  <text x="240" y="515" font-size="13" text-anchor="middle" fill="white">• Background, Window, Sprites</text>
+  <text x="240" y="535" font-size="13" text-anchor="middle" fill="white">• VRAM, OAM management</text>
+  <text x="240" y="555" font-size="13" text-anchor="middle" fill="white">• 160×144 display</text>
+  
+  <!-- APU Block -->
+  <rect x="460" y="440" width="280" height="140" fill="#f39c12" stroke="#e67e22" stroke-width="2" rx="8"/>
+  <text x="600" y="470" font-size="18" font-weight="bold" text-anchor="middle" fill="white">APU (Audio)</text>
+  <text x="600" y="495" font-size="13" text-anchor="middle" fill="white">• 4 sound channels</text>
+  <text x="600" y="515" font-size="13" text-anchor="middle" fill="white">• Square, Wave, Noise</text>
+  <text x="600" y="535" font-size="13" text-anchor="middle" fill="white">• Sample generation</text>
+  <text x="600" y="555" font-size="13" text-anchor="middle" fill="white">• Stereo mixing</text>
+  
+  <!-- Timers & Interrupts Block -->
+  <rect x="820" y="440" width="280" height="140" fill="#16a085" stroke="#138d75" stroke-width="2" rx="8"/>
+  <text x="960" y="470" font-size="18" font-weight="bold" text-anchor="middle" fill="white">Timers & Interrupts</text>
+  <text x="960" y="495" font-size="13" text-anchor="middle" fill="white">• Hardware timers</text>
+  <text x="960" y="515" font-size="13" text-anchor="middle" fill="white">• VBlank, LCD STAT</text>
+  <text x="960" y="535" font-size="13" text-anchor="middle" fill="white">• Joypad, Serial, Timer</text>
+  <text x="960" y="555" font-size="13" text-anchor="middle" fill="white">• Interrupt handling</text>
+  
+  <!-- Memory Components -->
+  <rect x="100" y="620" width="180" height="80" fill="#95a5a6" stroke="#7f8c8d" stroke-width="2" rx="8"/>
+  <text x="190" y="645" font-size="16" font-weight="bold" text-anchor="middle" fill="white">Cartridge ROM</text>
+  <text x="190" y="665" font-size="12" text-anchor="middle" fill="white">Game code & data</text>
+  <text x="190" y="685" font-size="12" text-anchor="middle" fill="white">MBC controllers</text>
+  
+  <rect x="310" y="620" width="180" height="80" fill="#95a5a6" stroke="#7f8c8d" stroke-width="2" rx="8"/>
+  <text x="400" y="645" font-size="16" font-weight="bold" text-anchor="middle" fill="white">RAM</text>
+  <text x="400" y="665" font-size="12" text-anchor="middle" fill="white">Work RAM</text>
+  <text x="400" y="685" font-size="12" text-anchor="middle" fill="white">High RAM</text>
+  
+  <rect x="520" y="620" width="180" height="80" fill="#95a5a6" stroke="#7f8c8d" stroke-width="2" rx="8"/>
+  <text x="610" y="645" font-size="16" font-weight="bold" text-anchor="middle" fill="white">VRAM</text>
+  <text x="610" y="665" font-size="12" text-anchor="middle" fill="white">Tile data</text>
+  <text x="610" y="685" font-size="12" text-anchor="middle" fill="white">Tile maps</text>
+  
+  <rect x="730" y="620" width="180" height="80" fill="#95a5a6" stroke="#7f8c8d" stroke-width="2" rx="8"/>
+  <text x="820" y="645" font-size="16" font-weight="bold" text-anchor="middle" fill="white">OAM</text>
+  <text x="820" y="665" font-size="12" text-anchor="middle" fill="white">Sprite attributes</text>
+  <text x="820" y="685" font-size="12" text-anchor="middle" fill="white">40 sprites</text>
+  
+  <rect x="940" y="620" width="180" height="80" fill="#95a5a6" stroke="#7f8c8d" stroke-width="2" rx="8"/>
+  <text x="1030" y="645" font-size="16" font-weight="bold" text-anchor="middle" fill="white">Joypad</text>
+  <text x="1030" y="665" font-size="12" text-anchor="middle" fill="white">Button input</text>
+  <text x="1030" y="685" font-size="12" text-anchor="middle" fill="white">D-pad, A, B, etc.</text>
+  
+  <!-- Arrows from MMU to components -->
+  <path d="M 520 390 L 240 440" stroke="#2c3e50" stroke-width="2" fill="none" marker-end="url(#arrowhead)"/>
+  <path d="M 600 390 L 600 440" stroke="#2c3e50" stroke-width="2" fill="none" marker-end="url(#arrowhead)"/>
+  <path d="M 680 390 L 960 440" stroke="#2c3e50" stroke-width="2" fill="none" marker-end="url(#arrowhead)"/>
+  
+  <!-- Arrows from MMU to memory -->
+  <path d="M 540 390 L 190 620" stroke="#7f8c8d" stroke-width="2" fill="none" marker-end="url(#arrowhead)"/>
+  <path d="M 560 390 L 400 620" stroke="#7f8c8d" stroke-width="2" fill="none" marker-end="url(#arrowhead)"/>
+  <path d="M 620 390 L 610 620" stroke="#7f8c8d" stroke-width="2" fill="none" marker-end="url(#arrowhead)"/>
+  <path d="M 640 390 L 820 620" stroke="#7f8c8d" stroke-width="2" fill="none" marker-end="url(#arrowhead)"/>
+  <path d="M 680 390 L 1030 620" stroke="#7f8c8d" stroke-width="2" fill="none" marker-end="url(#arrowhead)"/>
+  
+  <!-- Output labels -->
+  <text x="240" y="600" font-size="14" font-weight="bold" text-anchor="middle" fill="#c0392b">↓ Display Output</text>
+  <text x="600" y="600" font-size="14" font-weight="bold" text-anchor="middle" fill="#e67e22">↓ Audio Output</text>
+  
+  <!-- Arrow marker definition -->
+  <defs>
+    <marker id="arrowhead" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+      <polygon points="0 0, 10 3, 0 6" fill="#2c3e50"/>
+    </marker>
+  </defs>
+  
+  <!-- Legend -->
+  <text x="80" y="735" font-size="14" font-weight="bold" fill="#2c3e50">Data Flow:</text>
+  <line x1="160" y1="730" x2="220" y2="730" stroke="#2c3e50" stroke-width="3" marker-end="url(#arrowhead)"/>
+  <text x="230" y="735" font-size="12" fill="#2c3e50">Control/Instructions</text>
+  
+  <line x1="380" y1="730" x2="440" y2="730" stroke="#7f8c8d" stroke-width="2" marker-end="url(#arrowhead)"/>
+  <text x="450" y="735" font-size="12" fill="#2c3e50">Memory Access</text>
+</svg>
