@@ -41,15 +41,16 @@ public class CPU {
     }
 
     public void OpCodes(int code) {
+        if (code == 0x0031) {
+            
+        }
     };
 
     // System of bank switching : Two types of Cartridge : MBC1 and MBC2 (3, 4, 5)
     // depending on the size of the game
     // It is also named in the header of the card -> in the rom binary
     //
-    public void execute_command(int opCodes) {
 
-    };
     public void initialize() {
         System.out.print("----------------------------------------------------------------- \n");
         this.stack_pointer = 0xFFFE;
