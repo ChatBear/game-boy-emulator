@@ -2,14 +2,15 @@ package main.java.com;
 
 import java.io.DataInputStream;
 import java.io.FileInputStream;
+import java.util.ArrayList;
 
 public class CPU {
     private int a, b, c, d, e, f, h, l;
     private int af, bc, de, hl;
     private int cycle;
     private int program_counter;
-    private int stack_pointer; 
-    private int scx, scy; 
+    private int stack_pointer;
+    private int scx, scy;
 
     private int[] memory;
 
@@ -42,7 +43,7 @@ public class CPU {
 
     public void OpCodes(int code) {
         if (code == 0x0031) {
-            
+
         }
     };
 
@@ -54,16 +55,45 @@ public class CPU {
     public void initialize() {
         System.out.print("----------------------------------------------------------------- \n");
         this.stack_pointer = 0xFFFE;
-        this.program_counter = 0; 
-        this.cycle = 0; 
+        this.program_counter = 0;
+        this.cycle = 0;
         System.out.print("  \n End of initialization \n");
-    } 
+    }
 
     public void boot() {
-        for (int i=0x0000; i<=0x00FF; i++) {
-            int instruction = this.memory[i]; 
+        ArrayList<String> nintendoLogoCompressed = new ArrayList<String>();
+        // String[] nintendoLogoCompressed;
+        int[][][][] dataByTile = new int[32][32][8][8];
+        int[][] data = new int[256][256];
+        int[] nintendoLogoUnCompressed = new int[24];
+
+        for (int i = 0x0104; i <= 0x0133; i++) {
+            System.out.print(String.format("%8s", Integer.toBinaryString(this.memory[i])).replace(' ', '0'));
+            System.out.print("\n");
+            nintendoLogoCompressed.add(String.format("%8s", Integer.toBinaryString(this.memory[i])).replace(' ', '0'));
+        }
+        String firstBytes;
+        String secondBytes;
+        int pixel;
+        char lowBit = '0';
+        char highBit = '0';
+
+        for (int i = 0; i < nintendoLogoCompressed.size(); i = i + 2) {
+            if (i + 1 < nintendoLogoCompressed.size()) {
+                firstBytes = nintendoLogoCompressed.get(i);
+                secondBytes = nintendoLogoCompressed.get(i + 1);
+
+                for (int j = 0; j < 8; j++) {
+                    lowBit = firstBytes.charAt(j);
+                    highBit = secondBytes.charAt(j);
+                }
+                pixel = Integer.parseInt("" + highBit + lowBit, 2);
+                nintendoLogoUnCompressed[i] = pixel 
+            }
+
         }
     }
+
     public static void main(String[] args) {
         DataInputStream reader = null;
         final CPU cpu = new CPU(0, 0, 0, 0, 0, 0, 0, 0);
@@ -84,11 +114,11 @@ public class CPU {
                 cpu.upload_rom(hexas);
             }
             reader.close();
+
             cpu.initialize();
+            cpu.boot();
         } catch (Exception e) {
             System.out.println("Error: " + e.getMessage());
-
         }
-
     }
 }
