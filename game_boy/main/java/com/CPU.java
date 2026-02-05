@@ -65,11 +65,22 @@ public class CPU {
         // String[] nintendoLogoCompressed;
         int[][][][] dataByTile = new int[32][32][8][8];
         int[][] data = new int[256][256];
-        int[] nintendoLogoUnCompressed = new int[24];
+        int[][] nintendoLogoUnCompressed = new int[32][48];
+        int[][] nintendoLogoHexa = new int[8][12];
 
         for (int i = 0x0104; i <= 0x0133; i++) {
-            System.out.print(String.format("%8s", Integer.toBinaryString(this.memory[i])).replace(' ', '0'));
+            // System.out.print(String.format("%8s",
+            // Integer.toBinaryString(this.memory[i])).replace(' ', '0'));
+            // System.out.print(Integer.toHexString(this.memory[i]));
             System.out.print("\n");
+            String mem = Integer.toHexString(this.memory[i]);
+            // System.out.print(mem);
+            // System.out.print(" : " + this.memory[i]);
+
+            char[] memChar = mem.toCharArray();
+            for (int j = 0; j <= memChar.length; j++) {
+                var x = nintendoLogoHexa[(i / 2) * 4][i];
+            }
             nintendoLogoCompressed.add(String.format("%8s", Integer.toBinaryString(this.memory[i])).replace(' ', '0'));
         }
         String firstBytes;
@@ -78,20 +89,20 @@ public class CPU {
         char lowBit = '0';
         char highBit = '0';
 
-        for (int i = 0; i < nintendoLogoCompressed.size(); i = i + 2) {
-            if (i + 1 < nintendoLogoCompressed.size()) {
-                firstBytes = nintendoLogoCompressed.get(i);
-                secondBytes = nintendoLogoCompressed.get(i + 1);
+        // for (int i = 0; i < nintendoLogoCompressed.size(); i = i + 2) {
+        // if (i + 1 < nintendoLogoCompressed.size()) {
+        // firstBytes = nintendoLogoCompressed.get(i);
+        // secondBytes = nintendoLogoCompressed.get(i + 1);
 
-                for (int j = 0; j < 8; j++) {
-                    lowBit = firstBytes.charAt(j);
-                    highBit = secondBytes.charAt(j);
-                }
-                pixel = Integer.parseInt("" + highBit + lowBit, 2);
-                nintendoLogoUnCompressed[i] = pixel 
-            }
+        // for (int j = 0; j < 8; j++) {
+        // lowBit = firstBytes.charAt(j);
+        // highBit = secondBytes.charAt(j);
+        // }
+        // pixel = Integer.parseInt("" + highBit + lowBit, 2);
+        // // nintendoLogoUnCompressed[i] = pixel
+        // }
 
-        }
+        // }
     }
 
     public static void main(String[] args) {
