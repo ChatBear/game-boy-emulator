@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"os"
 	"time"
+
+	"github.com/hajimehoshi/ebiten/v2"
 )
 
 type CPU struct {
@@ -15,6 +17,19 @@ type CPU struct {
 	scx, scy               int
 	memory                 []int
 }
+
+var Palette = [4][3]uint8{
+	{0xE0, 0xF8, 0xD0}, // 0 - lightest
+	{0x88, 0xC0, 0x70}, // 1
+	{0x34, 0x68, 0x56}, // 2
+	{0x08, 0x18, 0x20}, // 3 - darkest
+}
+
+const (
+	ScreenW = 160
+	ScreenH = 144
+	Scale   = 4
+)
 
 func NewCPU(a, b, c, d, e, f, h, l uint8) (*CPU, error) {
 	// Check if the attributes are all 8-bit unsigned
@@ -56,12 +71,27 @@ func (cpu *CPU) boot() {
 
 	var hexaData [4][12]string
 	// TODO : CODE A OPTIMISER PARCE QU ALLER RETOUR SUR STRING -> BINAIRE PAS BIEN
-	for i := 0x0104; i <= 0x011B; i++ {
-		binaries := fmt.Sprintf("%02X", cpu.memory[i])
-		hexaData[i%2][(i-0x0104)/2] = string(binaries[0])
-		hexaData[i%2+1][(i-0x0104)/2] = string(binaries[1])
+	// iterator := 0
+	// for i := 0x0104; i <= 0x011b; i++ {
+	// 	binaries := fmt.Sprintf("%02X", cpu.memory[i])
+	// 	iterator++
+	// 	hexaData[(i-0x0104)/2][(i-0x0104)/2] = string(binaries[0])
+	// 	hexaData[(i-0x0104)/2+1][(i-0x0104)/2] = string(binaries[1])
+
+	// }
+	for i := 0; i <= 0x011b-0x0104; i++ {
+		binaries := fmt.Sprintf("%02X", cpu.memory[i+0x0104])
+		// iterator++
+		if i%2 == 0 {
+			hexaData[0][i/2] = string(binaries[0])
+			hexaData[1][i/2] = string(binaries[1])
+		} else {
+			hexaData[2][i/2] = string(binaries[0])
+			hexaData[3][i/2] = string(binaries[1])
+		}
 	}
 	fmt.Print("\n")
+	fmt.Print("-----------------------------------------------------------------\n")
 	for i := 0; i <= 3; i++ {
 		fmt.Print(hexaData[i])
 		fmt.Print("\n")
@@ -78,6 +108,20 @@ func (cpu *CPU) initialize() {
 	cpu.programCounter = 0
 	cpu.cycle = 0
 	fmt.Print("  \nEnd of initialization\n")
+}
+
+type Game struct{}
+
+func (g *Game) Update() error {
+	return nil
+}
+
+func (g *Game) Draw(screen *ebiten.Image) {
+	// empty = black screen
+}
+
+func (g *Game) Layout(w, h int) (int, int) {
+	return ScreenW, ScreenH
 }
 
 func main() {
@@ -106,4 +150,12 @@ func main() {
 	cpu.boot()
 	end := time.Since(start)
 	fmt.Printf("----------------------------- %v ----------------------------------------------\n", end)
+
+	// ebiten.SetWindowSize(ScreenW*Scale, ScreenH*Scale)
+	// ebiten.SetWindowTitle("Game Boy")
+	// if err := ebiten.RunGame(&Game{}); err != nil {
+	// 	log.Fatal(err)
+	// }
+
+	
 }
