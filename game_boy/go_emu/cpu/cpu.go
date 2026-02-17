@@ -5,7 +5,6 @@ import (
 	"image/color"
 	"log"
 	"os"
-	"strconv"
 	"time"
 
 	"github.com/hajimehoshi/ebiten/v2"
@@ -36,7 +35,6 @@ const (
 )
 
 func NewCPU(a, b, c, d, e, f, h, l uint8) (*CPU, error) {
-	// Check if the attributes are all 8-bit unsigned
 	return &CPU{
 		a:      a,
 		b:      b,
@@ -76,21 +74,12 @@ func (cpu *CPU) boot() {
 	fmt.Print("\n")
 	fmt.Print("-----------------------------------------------------------------\n")
 	var hexaData [8][12]string
-	// TODO : CODE A OPTIMISER PARCE QU ALLER RETOUR SUR STRING -> BINAIRE PAS BIEN
-	// iterator := 0
-	// for i := 0x0104; i <= 0x011b; i++ {
-	// 	binaries := fmt.Sprintf("%02X", cpu.memory[i])
-	// 	iterator++
-	// 	hexaData[(i-0x0104)/2][(i-0x0104)/2] = string(binaries[0])
-	// 	hexaData[(i-0x0104)/2+1][(i-0x0104)/2] = string(binaries[1])
 
-	// }
 	for i := 0; i <= 0x011b-0x0104; i++ {
 		fmt.Print(i)
 		fmt.Print("\n")
 		fmt.Print("-----------------------------------------------------------------\n")
 		binaries := fmt.Sprintf("%02X", cpu.memory[i+0x0104])
-		// iterator++
 		if i%2 == 0 {
 			hexaData[0][i/2] = string(binaries[0])
 			hexaData[1][i/2] = string(binaries[1])
@@ -104,7 +93,6 @@ func (cpu *CPU) boot() {
 		fmt.Print(i)
 		fmt.Print("\n")
 		binaries := fmt.Sprintf("%02X", cpu.memory[i+0x011b+1])
-		// iterator++
 		if i%2 == 0 {
 			hexaData[4][i/2] = string(binaries[0])
 			hexaData[5][i/2] = string(binaries[1])
@@ -115,77 +103,31 @@ func (cpu *CPU) boot() {
 	}
 	fmt.Print("\n")
 	fmt.Print("-----------------------------------------------------------------\n")
-	for i := 0; i <= 7; i++ {
-		for _, value := range hexaData[i] {
-			val, _ := strconv.ParseUint(value, 16, 16)
-			fmt.Printf("%04b", val)
-			fmt.Print(" ")
-		}
 
-		if i == 3 {
-			fmt.Print("\n")
-			fmt.Print("-----------------------------------------------------------------\n")
-			fmt.Print("\n")
-		}
-	}
-	// var pixel []uint8
-	var nibble string
-	var nintendoScreen [][]uint8
-	for i := 0; i < len(hexaData); i++ {
-		for y := 0; y < len(hexaData[i]); y++ {
-			val, _ := strconv.ParseUint(hexaData[i][y], 16, 16)
-			nibble = fmt.Sprintf("%04b", val)
-
-			for _, value := range nibble {
-				if value == '0' {
-					nintendoScreen[i+y] = []uint8{0, 0, 0, 0xff}
-				}
-				if value == '1' {
-					nintendoScreen[i+y] = []uint8{0xff, 0xff, 0xff, 0xff}
+	nintendoScreenData := []byte{}
+	for _, row := range hexaData {
+		for _, hexChar := range row {
+			// Convert hex character to number
+			var value int
+			fmt.Sscanf(hexChar, "%x", &value)
+			// Extract each bit (from MSB to LSB)
+			for bit := 3; bit >= 0; bit-- {
+				if (value & (1 << bit)) != 0 {
+					nintendoScreenData = append(nintendoScreenData, 0xFF, 0xFF, 0xFF, 0xFF)
+				} else {
+					nintendoScreenData = append(nintendoScreenData, 0x00, 0x00, 0x00, 0xFF)
 				}
 			}
 		}
 	}
-
-	nintendoScreenFlat := make([]uint8, 8*12*4)
-	fmt.Print(hexaData)
-	fmt.Print("\n")
-
-	for _, row := range nintendoScreen {
-		nintendoScreenFlat = append(nintendoScreenFlat, row...)
+	var offset = 10000
+	var multi_48 = 0
+	for index, value := range nintendoScreenData {
+		if index != 0 && index%188 == 0 {
+			multi_48 += 1
+		}
+		cpu.screen[multi_48*ScreenW+index+offset] = value
 	}
-
-	for index, value := range nintendoScreenFlat {
-		cpu.screen[index] = value
-	}
-	// for i := 0; i < len(hexaData); i++ {
-	// 	for y := 0; y < len(hexaData[i]); y++ {
-	// 		val, _ := strconv.ParseUint(hexaData[i][y], 16, 16)
-	// 		nibble = fmt.Sprintf("%04b", val)
-	// 		fmt.Printf("Nibble: %v", nibble)
-	// 		fmt.Print("\n")
-	// 		current_index := 4*i*ScreenW + y*4
-	// 		for _, value := range nibble {
-	// 			if value == '0' {
-	// 				cpu.screen[current_index] = 0
-	// 				cpu.screen[current_index+1] = 0
-	// 				cpu.screen[current_index+2] = 0
-	// 				cpu.screen[current_index+3] = 0xFF
-	// 			}
-	// 			if value == '1' {
-	// 				cpu.screen[current_index] = 0xFF
-	// 				cpu.screen[current_index+1] = 0xFF
-	// 				cpu.screen[current_index+2] = 0xFF
-	// 				cpu.screen[current_index+3] = 0xFF
-	// 			}
-	// 			current_index += 16
-	// 		}
-
-	// 	}
-	// }
-
-	fmt.Print("-----------------------------------------------------------------\n")
-	fmt.Print("\n")
 }
 
 // System of bank switching: Two types of Cartridge: MBC1 and MBC2 (3, 4, 5)
