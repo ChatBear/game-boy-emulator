@@ -44,6 +44,7 @@ func NewCPU(a, b, c, d, e, f, h, l uint8) (*CPU, error) {
 		Screen: make([]uint8, 4*config.ScreenW*config.ScreenH),
 	}
 	cpu.initOpcodes()
+	cpu.InitializeRegisterValues()
 	return cpu, nil
 }
 
@@ -73,7 +74,7 @@ func (cpu *CPU) initOpcodes() {
 
 // TODO: Need to add a banking transition system on the memory not done yet
 // Look for MBC1 and MBC2 in the page 13
-func (cpu *CPU) UploadROM(rom []int) {
+func (cpu *CPU) UploadROM(rom []byte) {
 	fmt.Println("Writing the first 32Kb on the Memory")
 	for i := 0; i < 0x8000 && i < len(rom); i++ {
 		cpu.memory[i] = uint8(rom[i])
@@ -178,9 +179,14 @@ func (cpu *CPU) writeMemory(adress uint16, value uint8) error {
 		cpu.memory[adress] = value
 	case adress >= 0xFEA0 && adress < 0xFF00:
 		return fmt.Errorf("Write to unusable memory: 0x%04X\n", adress)
+	// case adress >= 0xFF00 && adress < 0xFF4C:
+	// 	// I/O mapping — not implemented yet
+	// 	return fmt.Errorf("I/O mapping has not been implemented yet: 0x%04X", adress)
 	case adress >= 0xFF00 && adress < 0xFF4C:
-		// I/O mapping — not implemented yet
-		return fmt.Errorf("I/O mapping has not been implemented yet: 0x%04X", adress)
+		cpu.memory[adress] = value
+		if adress == 0xFF02 && value == 0x81 {
+			fmt.Printf("%c", cpu.memory[0xFF01]) // print serial output
+		}
 	case adress >= 0xFF4C && adress < 0xFF80:
 		return fmt.Errorf("Write to unusable memory: 0x%04X\n", adress)
 	case adress >= 0xFF80 && adress < 0xFFFF:
@@ -191,4 +197,31 @@ func (cpu *CPU) writeMemory(adress uint16, value uint8) error {
 		return fmt.Errorf("Unknown adress cannot write into the memory: 0x%04X", adress)
 	}
 	return nil
+}
+
+func (cpu *CPU) Step() error {
+	fmt.Print("----------------------------")
+	fmt.Print("\n")
+	fmt.Print(cpu.programCounter)
+	fmt.Print("\n")
+	fmt.Print(cpu.stackPointer)
+	fmt.Print("\n")
+	fmt.Print("----------------------------")
+	if cpu.programCounter == 515 {
+		fmt.Print("DEBUGGER")
+	}
+	opcode := cpu.memory[cpu.programCounter]
+	cpu.programCounter++
+	v1 := cpu.memory[int(cpu.programCounter)]
+	v2 := cpu.memory[int(cpu.programCounter+1)]
+	return cpu.opCodes(uint16(opcode), v1, v2)
+}
+
+func (cpu *CPU) Run(maxCycles int) {
+	for cpu.cycle < maxCycles && !cpu.stopped {
+		if err := cpu.Step(); err != nil {
+			fmt.Println(err)
+			return
+		}
+	}
 }

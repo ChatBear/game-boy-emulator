@@ -24,7 +24,7 @@ func main() {
 		return
 	}
 
-	romPath := "rom.gb"
+	romPath := "/Users/shiraz/Desktop/Bureau - MacBook Pro de Shiraz (3)/myProject/tuto_java/game_boy/go_emu/blargg-test-roms/cpu_instrs/individual/06-ld r,r.gb"
 	bytes, err := os.ReadFile(romPath)
 	if err != nil {
 		fmt.Printf("Error reading ROM: %v\n", err)
@@ -36,7 +36,7 @@ func main() {
 		hexas[i] = int(b) & 0xFF
 	}
 
-	cpu.UploadROM(hexas)
+	// cpu.UploadROM(hexas)
 	cpu.InitializeRegisterValues()
 	fmt.Print("-----------------------------------------------------------------\n")
 	cpu.Boot()
