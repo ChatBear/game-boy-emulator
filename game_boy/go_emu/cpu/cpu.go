@@ -4,23 +4,33 @@ import (
 	"fmt"
 	"go_emu/apu"
 	"go_emu/config"
+	"strings"
 )
 
 type CPU struct {
 	a, b, c, d, e, f, h, l uint8
 	cycle                  int
+	timerAcc               int
 	programCounter         uint16
 	stackPointer           uint16
 	scx, scy               int
 	memory                 []uint8
 	Screen                 []uint8
 	apu                    *apu.APU
-	opcodeTable            [256]func(value uint8, value2 uint8)
-	opcodeTablePrefixed    [256]func(value uint8, value2 uint8)
+	opcodeTable            [256]func()
+	opcodeTablePrefixed    [256]func()
 	halt                   bool
 	stopped                bool
-	pendingDisableIME      bool
+	pendingEnableIME       bool
 	ime                    bool
+	serialOutput           strings.Builder
+}
+
+var nCycles = map[uint8]int{
+	0b00: 1024,
+	0b01: 16,
+	0b10: 64,
+	0b11: 256,
 }
 
 var Palette = [4][3]uint8{
@@ -40,7 +50,7 @@ func NewCPU(a, b, c, d, e, f, h, l uint8) (*CPU, error) {
 		f:      f,
 		h:      h,
 		l:      l,
-		memory: make([]uint8, 0xFFFF),
+		memory: make([]uint8, 0x10000),
 		Screen: make([]uint8, 4*config.ScreenW*config.ScreenH),
 	}
 	cpu.initOpcodes()
@@ -57,6 +67,13 @@ func (cpu *CPU) setAF(v uint16) { cpu.a = uint8(v >> 8); cpu.f = uint8(v & 0xF0)
 func (cpu *CPU) setBC(v uint16) { cpu.b = uint8(v >> 8); cpu.c = uint8(v & 0xFF) }
 func (cpu *CPU) setDE(v uint16) { cpu.d = uint8(v >> 8); cpu.e = uint8(v & 0xFF) }
 func (cpu *CPU) setHL(v uint16) { cpu.h = uint8(v >> 8); cpu.l = uint8(v & 0xFF) }
+
+func (cpu *CPU) ie() uint8  { return cpu.memory[0xFFFF] }
+func (cpu *CPU) if_() uint8 { return cpu.memory[0xFF0F] }
+
+func (cpu *CPU) tick(tCycle int) {
+	cpu.UpdateTimer(tCycle)
+}
 
 func (cpu *CPU) initOpcodes() {
 	cpu.initLoadOpcodes()
@@ -75,11 +92,9 @@ func (cpu *CPU) initOpcodes() {
 // TODO: Need to add a banking transition system on the memory not done yet
 // Look for MBC1 and MBC2 in the page 13
 func (cpu *CPU) UploadROM(rom []byte) {
-	fmt.Println("Writing the first 32Kb on the Memory")
 	for i := 0; i < 0x8000 && i < len(rom); i++ {
 		cpu.memory[i] = uint8(rom[i])
 	}
-	fmt.Println("Done")
 }
 
 func (cpu *CPU) Boot() {
@@ -139,25 +154,26 @@ func (cpu *CPU) Boot() {
 }
 
 func (cpu *CPU) InitializeRegisterValues() {
-	fmt.Print("-----------------------------------------------------------------\n")
+	// fmt.Print("-----------------------------------------------------------------\n")
 	cpu.stackPointer = 0xFFFE
-	cpu.programCounter = 0
+	cpu.programCounter = 0x100
 	cpu.cycle = 0
-	fmt.Print("  \nEnd of initialization\n")
+	cpu.timerAcc = 0
+	// fmt.Print("  \nEnd of initialization\n")
 }
 
-func (cpu *CPU) opCodes(code uint16, value uint8, value2 uint8) error {
-	if code == 0xCB {
-		cpu.programCounter++
-		cpu.opcodeTablePrefixed[cpu.programCounter](value, value2)
-		return nil
-	}
-	if handler := cpu.opcodeTable[code&0xFF]; handler != nil {
-		handler(value, value2)
-		return nil
-	} else {
-		return fmt.Errorf("Unimplemented opcode: 0x%02X\n", code)
-	}
+// fetch8 reads the byte at PC and advances PC by 1.
+func (cpu *CPU) fetch8() uint8 {
+	v := cpu.memory[cpu.programCounter]
+	cpu.programCounter++
+	return v
+}
+
+// fetch16 reads a little-endian 16-bit value at PC and advances PC by 2.
+func (cpu *CPU) fetch16() uint16 {
+	lo := cpu.fetch8()
+	hi := cpu.fetch8()
+	return uint16(hi)<<8 | uint16(lo)
 }
 
 func (cpu *CPU) writeMemory(adress uint16, value uint8) error {
@@ -185,7 +201,7 @@ func (cpu *CPU) writeMemory(adress uint16, value uint8) error {
 	case adress >= 0xFF00 && adress < 0xFF4C:
 		cpu.memory[adress] = value
 		if adress == 0xFF02 && value == 0x81 {
-			fmt.Printf("%c", cpu.memory[0xFF01]) // print serial output
+			cpu.serialOutput.WriteByte(cpu.memory[0xFF01])
 		}
 	case adress >= 0xFF4C && adress < 0xFF80:
 		return fmt.Errorf("Write to unusable memory: 0x%04X\n", adress)
@@ -199,22 +215,90 @@ func (cpu *CPU) writeMemory(adress uint16, value uint8) error {
 	return nil
 }
 
-func (cpu *CPU) Step() error {
-	fmt.Print("----------------------------")
-	fmt.Print("\n")
-	fmt.Print(cpu.programCounter)
-	fmt.Print("\n")
-	fmt.Print(cpu.stackPointer)
-	fmt.Print("\n")
-	fmt.Print("----------------------------")
-	if cpu.programCounter == 515 {
-		fmt.Print("DEBUGGER")
+// Step fetches a single opcode at PC, advances PC past it, and dispatches.
+// Each handler is responsible for consuming its own immediate operands
+// (via fetch8/fetch16) and advancing PC accordingly.
+func (cpu *CPU) serviceInterrupt() {
+	ie := cpu.memory[0xFFFF]
+	iflag := cpu.memory[0xFF0F]
+	pending := ie & iflag & 0x1F
+	var bit uint8
+	for bit = 0; bit < 5; bit++ {
+		if pending&(1<<bit) != 0 {
+			break
+		}
 	}
-	opcode := cpu.memory[cpu.programCounter]
-	cpu.programCounter++
-	v1 := cpu.memory[int(cpu.programCounter)]
-	v2 := cpu.memory[int(cpu.programCounter+1)]
-	return cpu.opCodes(uint16(opcode), v1, v2)
+	cpu.ime = false
+	cpu.memory[0xFF0F] = iflag &^ (1 << bit)
+	cpu.tick(8)
+	cpu.stackPointer--
+	_ = cpu.writeMemory(cpu.stackPointer, uint8(cpu.programCounter>>8))
+	cpu.tick(4)
+	cpu.stackPointer--
+	_ = cpu.writeMemory(cpu.stackPointer, uint8(cpu.programCounter&0xFF))
+	cpu.tick(4)
+	cpu.programCounter = 0x40 + uint16(bit)*8
+	cpu.tick(4)
+}
+
+func (cpu *CPU) UpdateTimer(cycle_increment int) {
+	cpu.cycle += cycle_increment
+	tac := cpu.memory[0xFF07]
+	if tac&0b100 == 0 {
+		return
+	}
+	period := nCycles[tac&0b11]
+	cpu.timerAcc += cycle_increment
+	for cpu.timerAcc >= period {
+		cpu.timerAcc -= period
+		tima := cpu.memory[0xFF05]
+		if tima == 0xFF {
+			_ = cpu.writeMemory(0xFF05, cpu.memory[0xFF06])
+			_ = cpu.writeMemory(0xFF0F, cpu.memory[0xFF0F]|0x04)
+		} else {
+			_ = cpu.writeMemory(0xFF05, tima+1)
+		}
+	}
+}
+
+func (cpu *CPU) Step() error {
+	if int(cpu.programCounter) >= len(cpu.memory) {
+		return fmt.Errorf("program counter out of bounds: 0x%04X", cpu.programCounter)
+	}
+	// 0x1F is for mask the bit 5 to 7 since they are not used in IE and IF.
+	pending := cpu.ie() & cpu.if_() & 0x1F
+	if pending != 0 {
+		cpu.halt = false
+		if cpu.ime {
+			cpu.serviceInterrupt()
+		}
+	}
+	if cpu.halt {
+		cpu.UpdateTimer(4)
+		return nil
+	}
+	opcode := cpu.fetch8()
+
+	if opcode == 0xCB {
+		prefixed := cpu.fetch8()
+		handler := cpu.opcodeTablePrefixed[prefixed]
+		if handler == nil {
+			return fmt.Errorf("Unimplemented prefixed opcode: 0xCB%02X", prefixed)
+		}
+		handler()
+		return nil
+	}
+	handler := cpu.opcodeTable[opcode]
+	if handler == nil {
+		return fmt.Errorf("Unimplemented opcode: 0x%02X", opcode)
+	}
+
+	handler()
+	if cpu.pendingEnableIME {
+		cpu.ime = true
+		cpu.pendingEnableIME = false
+	}
+	return nil
 }
 
 func (cpu *CPU) Run(maxCycles int) {
@@ -223,5 +307,6 @@ func (cpu *CPU) Run(maxCycles int) {
 			fmt.Println(err)
 			return
 		}
+
 	}
 }

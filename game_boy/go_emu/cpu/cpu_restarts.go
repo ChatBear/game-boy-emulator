@@ -9,12 +9,12 @@ func (cpu *CPU) restart(value uint8) {
 }
 
 func (cpu *CPU) initRestartOpCode() {
-	cpu.opcodeTable[0xC7] = func(_, _ uint8) { cpu.restart(0x00); cpu.cycle += 32 }
-	cpu.opcodeTable[0xCF] = func(_, _ uint8) { cpu.restart(0x08); cpu.cycle += 32 }
-	cpu.opcodeTable[0xD7] = func(_, _ uint8) { cpu.restart(0x10); cpu.cycle += 32 }
-	cpu.opcodeTable[0xDF] = func(_, _ uint8) { cpu.restart(0x18); cpu.cycle += 32 }
-	cpu.opcodeTable[0xE7] = func(_, _ uint8) { cpu.restart(0x20); cpu.cycle += 32 }
-	cpu.opcodeTable[0xEF] = func(_, _ uint8) { cpu.restart(0x28); cpu.cycle += 32 }
-	cpu.opcodeTable[0xF7] = func(_, _ uint8) { cpu.restart(0x30); cpu.cycle += 32 }
-	cpu.opcodeTable[0xFF] = func(_, _ uint8) { cpu.restart(0x38); cpu.cycle += 32 }
+	cpu.opcodeTable[0xC7] = func() { cpu.restart(0x00); cpu.UpdateTimer(32) }
+	cpu.opcodeTable[0xCF] = func() { cpu.restart(0x08); cpu.UpdateTimer(32) }
+	cpu.opcodeTable[0xD7] = func() { cpu.restart(0x10); cpu.UpdateTimer(32) }
+	cpu.opcodeTable[0xDF] = func() { cpu.restart(0x18); cpu.UpdateTimer(32) }
+	cpu.opcodeTable[0xE7] = func() { cpu.restart(0x20); cpu.UpdateTimer(32) }
+	cpu.opcodeTable[0xEF] = func() { cpu.restart(0x28); cpu.UpdateTimer(32) }
+	cpu.opcodeTable[0xF7] = func() { cpu.restart(0x30); cpu.UpdateTimer(32) }
+	cpu.opcodeTable[0xFF] = func() { cpu.restart(0x38); cpu.UpdateTimer(32) }
 }

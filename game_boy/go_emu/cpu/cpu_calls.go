@@ -1,44 +1,49 @@
 package cpu
 
-func (cpu *CPU) call(value, value2 uint8) {
+func (cpu *CPU) call(addr uint16) {
 	cpu.stackPointer--
 	cpu.writeMemory(cpu.stackPointer, uint8(cpu.programCounter>>8))
 	cpu.stackPointer--
 	cpu.writeMemory(cpu.stackPointer, uint8(cpu.programCounter&0xFF))
-	cpu.jump(value, value2)
+	cpu.jump(addr)
 }
 
 func (cpu *CPU) initCallsOpCode() {
-	cpu.opcodeTable[0xCD] = func(value, value2 uint8) {
-		cpu.call(value, value2)
-		cpu.cycle += 24
+	cpu.opcodeTable[0xCD] = func() {
+		addr := cpu.fetch16()
+		cpu.call(addr)
+		cpu.UpdateTimer(24)
 	}
 
-	cpu.opcodeTable[0xC4] = func(value, value2 uint8) {
+	cpu.opcodeTable[0xC4] = func() {
+		addr := cpu.fetch16()
 		if cpu.f&0x80 == 0 {
-			cpu.call(value, value2)
+			cpu.call(addr)
 		}
-		cpu.cycle += 12
+		cpu.UpdateTimer(12)
 	}
 
-	cpu.opcodeTable[0xCC] = func(value, value2 uint8) {
+	cpu.opcodeTable[0xCC] = func() {
+		addr := cpu.fetch16()
 		if cpu.f&0x80 != 0 {
-			cpu.call(value, value2)
+			cpu.call(addr)
 		}
-		cpu.cycle += 12
+		cpu.UpdateTimer(12)
 	}
 
-	cpu.opcodeTable[0xD4] = func(value, value2 uint8) {
+	cpu.opcodeTable[0xD4] = func() {
+		addr := cpu.fetch16()
 		if cpu.f&0x10 == 0 {
-			cpu.call(value, value2)
+			cpu.call(addr)
 		}
-		cpu.cycle += 12
+		cpu.UpdateTimer(12)
 	}
 
-	cpu.opcodeTable[0xDC] = func(value, value2 uint8) {
+	cpu.opcodeTable[0xDC] = func() {
+		addr := cpu.fetch16()
 		if cpu.f&0x10 != 0 {
-			cpu.call(value, value2)
+			cpu.call(addr)
 		}
-		cpu.cycle += 12
+		cpu.UpdateTimer(12)
 	}
 }

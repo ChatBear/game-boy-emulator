@@ -29,20 +29,20 @@ func (cpu *CPU) add16SP(operand uint8) {
 }
 
 func (cpu *CPU) init16BitArthmeticOpCode() {
-	cpu.opcodeTable[0x09] = func(_, _ uint8) { cpu.add16HL(cpu.getBC()); cpu.cycle += 8 }
-	cpu.opcodeTable[0x19] = func(_, _ uint8) { cpu.add16HL(cpu.getDE()); cpu.cycle += 8 }
-	cpu.opcodeTable[0x29] = func(_, _ uint8) { cpu.add16HL(cpu.getHL()); cpu.cycle += 8 }
-	cpu.opcodeTable[0x39] = func(_, _ uint8) { cpu.add16HL(cpu.stackPointer); cpu.cycle += 8 }
-	cpu.opcodeTable[0xE8] = func(value, _ uint8) { cpu.add16SP(value); cpu.cycle += 16 }
+	cpu.opcodeTable[0x09] = func() { cpu.add16HL(cpu.getBC()); cpu.UpdateTimer(8) }
+	cpu.opcodeTable[0x19] = func() { cpu.add16HL(cpu.getDE()); cpu.UpdateTimer(8) }
+	cpu.opcodeTable[0x29] = func() { cpu.add16HL(cpu.getHL()); cpu.UpdateTimer(8) }
+	cpu.opcodeTable[0x39] = func() { cpu.add16HL(cpu.stackPointer); cpu.UpdateTimer(8) }
+	cpu.opcodeTable[0xE8] = func() { cpu.add16SP(cpu.fetch8()); cpu.UpdateTimer(16) }
 
-	cpu.opcodeTable[0x03] = func(_, _ uint8) { cpu.setBC(cpu.getBC() + 1); cpu.cycle += 8 }
-	cpu.opcodeTable[0x13] = func(_, _ uint8) { cpu.setDE(cpu.getDE() + 1); cpu.cycle += 8 }
-	cpu.opcodeTable[0x23] = func(_, _ uint8) { cpu.setHL(cpu.getHL() + 1); cpu.cycle += 8 }
+	cpu.opcodeTable[0x03] = func() { cpu.setBC(cpu.getBC() + 1); cpu.UpdateTimer(8) }
+	cpu.opcodeTable[0x13] = func() { cpu.setDE(cpu.getDE() + 1); cpu.UpdateTimer(8) }
+	cpu.opcodeTable[0x23] = func() { cpu.setHL(cpu.getHL() + 1); cpu.UpdateTimer(8) }
 
-	cpu.opcodeTable[0x33] = func(_, _ uint8) { cpu.stackPointer = uint16(cpu.stackPointer + 1); cpu.cycle += 8 }
-	cpu.opcodeTable[0x3B] = func(_, _ uint8) { cpu.stackPointer = uint16(cpu.stackPointer - 1); cpu.cycle += 8 }
-	cpu.opcodeTable[0x0B] = func(_, _ uint8) { cpu.setBC(cpu.getBC() - 1); cpu.cycle += 8 }
-	cpu.opcodeTable[0x1B] = func(_, _ uint8) { cpu.setDE(cpu.getDE() - 1); cpu.cycle += 8 }
-	cpu.opcodeTable[0x2B] = func(_, _ uint8) { cpu.setHL(cpu.getHL() - 1); cpu.cycle += 8 }
+	cpu.opcodeTable[0x33] = func() { cpu.stackPointer = uint16(cpu.stackPointer + 1); cpu.UpdateTimer(8) }
+	cpu.opcodeTable[0x3B] = func() { cpu.stackPointer = uint16(cpu.stackPointer - 1); cpu.UpdateTimer(8) }
+	cpu.opcodeTable[0x0B] = func() { cpu.setBC(cpu.getBC() - 1); cpu.UpdateTimer(8) }
+	cpu.opcodeTable[0x1B] = func() { cpu.setDE(cpu.getDE() - 1); cpu.UpdateTimer(8) }
+	cpu.opcodeTable[0x2B] = func() { cpu.setHL(cpu.getHL() - 1); cpu.UpdateTimer(8) }
 
 }

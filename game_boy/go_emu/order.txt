@@ -1,0 +1,39 @@
+Top-level tests
+cpu_instrs/ – CPU instruction behavior. Verifies all opcodes (except STOP and 11 illegal ones) produce correct results without trashing other registers. Split into 11 individual ROMs:
+
+01-special – misc/edge-case ops (DAA, etc.)
+02-interrupts – interrupt handling (EI/DI/RETI, IF/IE)
+03-op sp,hl – stack-pointer/HL ops (ADD SP,n, LD HL,SP+n, LD SP,HL)
+04-op r,imm – register ↔ immediate
+05-op rp – register-pair ops (INC rp, ADD HL,rp, …)
+06-ld r,r – register-to-register loads
+07-jr,jp,call,ret,rst – control flow
+08-misc instrs – CPL, SCF, CCF, etc.
+09-op r,r – ALU register-to-register
+10-bit ops – CB-prefix BIT/SET/RES/RL/RR/SLA/...
+11-op a,(hl) – ALU with (HL) operand
+instr_timing/ – CPU instruction cycle timing (taken/not-taken branches included). Requires working timer (TAC/TIMA/TMA).
+
+mem_timing/ and mem_timing-2/ – timing of memory reads/writes performed by instructions (which cycle the bus access happens on). v2 is a stricter rewrite. Three sub-tests each:
+
+01-read_timing
+02-write_timing
+03-modify_timing (read-modify-write)
+interrupt_time/ – cycle timing of interrupt dispatch (CGB-only behavior included).
+
+dmg_sound/ and cgb_sound/ – APU behavior on DMG vs CGB. 12 sub-ROMs each:
+
+01-registers, 02-len ctr, 03-trigger, 04-sweep, 05-sweep details, 06-overflow on trigger, 07-len sweep period sync, 08-len ctr during power, 09-wave read while on, 10-wave trigger while on, 11-regs after power, 12-wave (write while on)
+oam_bug/ – DMG-only OAM corruption bug from 16-bit inc/dec on $FE00–$FEFF during early scanline cycles. Sub-tests:
+
+1-lcd_sync, 2-causes, 3-non_causes, 4-scanline_timing, 5-timing_bug, 6-timing_no_bug, 7-timing_effect, 8-instr_effect
+halt_bug.gb – the HALT-with-IME-disabled bug (PC-skip / instruction repeat behavior).
+
+Recommended order for an emulator
+cpu_instrs (correctness first)
+instr_timing
+mem_timing / mem_timing-2
+halt_bug, interrupt_time
+dmg_sound
+oam_bug (needs working PPU + DMG quirks)
+cgb_sound (only if you implement CGB)

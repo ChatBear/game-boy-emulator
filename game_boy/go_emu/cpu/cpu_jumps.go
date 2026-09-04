@@ -1,83 +1,92 @@
 package cpu
 
-func (cpu *CPU) jump(value, value2 uint8) {
-	cpu.programCounter = uint16(value2)<<8 | uint16(value)
+func (cpu *CPU) jump(addr uint16) {
+	cpu.programCounter = addr
 }
 
-func (cpu *CPU) jumpRelative(value uint8) {
-	cpu.programCounter = uint16(int32(cpu.programCounter) + int32(int8(value)))
+func (cpu *CPU) jumpRelative(offset uint8) {
+	cpu.programCounter = uint16(int32(cpu.programCounter) + int32(int8(offset)))
 }
 
 func (cpu *CPU) initJumpsOpCodes() {
-	cpu.opcodeTable[0xC3] = func(value, value2 uint8) {
-		cpu.jump(value, value2)
-		cpu.cycle += 12
+	cpu.opcodeTable[0xC3] = func() {
+		addr := cpu.fetch16()
+		cpu.jump(addr)
+		cpu.UpdateTimer(12)
 	}
 
-	cpu.opcodeTable[0xC2] = func(value, value2 uint8) {
+	cpu.opcodeTable[0xC2] = func() {
+		addr := cpu.fetch16()
 		if cpu.f&0x80 == 0 {
-			cpu.jump(value, value2)
+			cpu.jump(addr)
 		}
-		cpu.cycle += 12
+		cpu.UpdateTimer(12)
 	}
 
-	cpu.opcodeTable[0xCA] = func(value, value2 uint8) {
+	cpu.opcodeTable[0xCA] = func() {
+		addr := cpu.fetch16()
 		if cpu.f&0x80 != 0 {
-			cpu.jump(value, value2)
+			cpu.jump(addr)
 		}
-		cpu.cycle += 12
+		cpu.UpdateTimer(12)
 	}
 
-	cpu.opcodeTable[0xD2] = func(value, value2 uint8) {
+	cpu.opcodeTable[0xD2] = func() {
+		addr := cpu.fetch16()
 		if cpu.f&0x10 == 0 {
-			cpu.jump(value, value2)
+			cpu.jump(addr)
 		}
-		cpu.cycle += 12
+		cpu.UpdateTimer(12)
 	}
 
-	cpu.opcodeTable[0xDA] = func(value, value2 uint8) {
+	cpu.opcodeTable[0xDA] = func() {
+		addr := cpu.fetch16()
 		if cpu.f&0x10 != 0 {
-			cpu.jump(value, value2)
+			cpu.jump(addr)
 		}
-		cpu.cycle += 12
+		cpu.UpdateTimer(12)
 	}
 
-	cpu.opcodeTable[0xE9] = func(_, _ uint8) {
+	cpu.opcodeTable[0xE9] = func() {
 		cpu.programCounter = cpu.getHL()
-		cpu.cycle += 4
+		cpu.UpdateTimer(4)
 	}
 
-	cpu.opcodeTable[0x18] = func(value uint8, _ uint8) {
-		cpu.jumpRelative(value)
-		cpu.cycle += 8
+	cpu.opcodeTable[0x18] = func() {
+		offset := cpu.fetch8()
+		cpu.jumpRelative(offset)
+		cpu.UpdateTimer(8)
 	}
 
-	cpu.opcodeTable[0x20] = func(value uint8, _ uint8) {
+	cpu.opcodeTable[0x20] = func() {
+		offset := cpu.fetch8()
 		if cpu.f&0x80 == 0 {
-			cpu.jumpRelative(value)
+			cpu.jumpRelative(offset)
 		}
-		cpu.cycle += 8
+		cpu.UpdateTimer(8)
 	}
 
-	cpu.opcodeTable[0x28] = func(value uint8, _ uint8) {
+	cpu.opcodeTable[0x28] = func() {
+		offset := cpu.fetch8()
 		if cpu.f&0x80 != 0 {
-			cpu.jumpRelative(value)
+			cpu.jumpRelative(offset)
 		}
-		cpu.cycle += 8
+		cpu.UpdateTimer(8)
 	}
 
-	cpu.opcodeTable[0x30] = func(value uint8, _ uint8) {
+	cpu.opcodeTable[0x30] = func() {
+		offset := cpu.fetch8()
 		if cpu.f&0x10 == 0 {
-			cpu.jumpRelative(value)
+			cpu.jumpRelative(offset)
 		}
-		cpu.cycle += 8
+		cpu.UpdateTimer(8)
 	}
 
-	cpu.opcodeTable[0x38] = func(value uint8, _ uint8) {
+	cpu.opcodeTable[0x38] = func() {
+		offset := cpu.fetch8()
 		if cpu.f&0x10 != 0 {
-			cpu.jumpRelative(value)
+			cpu.jumpRelative(offset)
 		}
-		cpu.cycle += 8
+		cpu.UpdateTimer(8)
 	}
-
 }
