@@ -1,3 +1,7 @@
+pub mod cpu;
+pub mod memory;
+
 fn main() {
-    gb::cpu::registers::printer();
+    let cpu = cpu::Cpu::new();
+    cpu.display();
 }
