@@ -1,7 +1,8 @@
 pub mod cpu;
+pub mod gb;
 pub mod memory;
 
 fn main() {
-    let cpu = cpu::Cpu::new();
-    cpu.display();
+    let gb = gb::GameBoy::new();
+    gb.display();
 }

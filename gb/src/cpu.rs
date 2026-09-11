@@ -1,8 +1,4 @@
-use crate::memory;
-
 pub mod registers;
-
-const N_CYCLES: [u16; 4] = [1024, 16, 64, 256];
 
 #[derive(Default)]
 pub struct Cpu {
@@ -14,16 +10,17 @@ pub struct Cpu {
     f: u8,
     h: u8,
     l: u8,
-    cycle: u128,
-    memory: memory::memory,
-    halt: bool,
-    stopeed: bool,
-    pending_enable_ime: bool,
-    ime: bool,
-    serial_output: String,
+    // cycle: u128,
+    // halt: bool,
+    // stopeed: bool,
+    // pending_enable_ime: bool,
+    // ime: bool,
+    // serial_output: String,
 }
 
 impl Cpu {
+    const N_CYCLES: [u16; 4] = [1024, 16, 64, 256];
+
     pub fn new() -> Self {
         Self::default()
     }
@@ -56,7 +53,8 @@ impl Cpu {
         self.l = (v & 0xFF) as u8;
     }
 
-    pub fn display() {
+    pub fn display(self) -> Self {
         println!("Je suis un micro");
+        self
     }
 }
