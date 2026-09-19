@@ -1,3 +1,6 @@
+use std::any::Any;
+use std::collections::HashMap;
+
 use crate::{cpu::Cpu, memory::Memory};
 
 pub struct GameBoy {
@@ -12,8 +15,13 @@ impl GameBoy {
             memory: Memory::new(),
         }
     }
+
     pub fn display(self) {
         self.cpu.display();
         println!("Je suis une game boy");
+    }
+
+    fn decode(code: u8) {
+        
     }
 }
