@@ -7,7 +7,7 @@ impl Memory {
         Memory { memory: [0; 65536] }
     }
 
-    fn write(&mut self, address: u16, value: u8) {
+    pub fn write(&mut self, address: u16, value: u8) {
         match address {
             0x0000..=0x7FFF => panic!(
                 "Multiple Bank Cartridge has not been implemented yet: 0x{:04X}",
@@ -37,7 +37,7 @@ impl Memory {
             }
         }
     }
-    fn read(&self, address: u16) -> u8 {
+    pub fn read(&self, address: u16) -> u8 {
         self.memory[address as usize]
     }
 }
