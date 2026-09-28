@@ -1,0 +1,9 @@
+Implémenter le timer : 
+
+Dispatch. After each instruction, if IME is on and IE & IF != 0, turn off IME, clear the lowest pending bit in IF, 
+push PC onto the stack, and jump to 0x40 + 8 × bit.
+EI delay. IME only turns on after the instruction that follows EI. Your ei_pending field is there for this.
+RETI. It pops PC and sets IME = 1.
+HALT wake-up. Leave halt as soon as IE & IF != 0, even if IME is off.
+
+Timer. A later sub-test waits for a real timer interrupt, so TIMA has to count and set IF bit 2 when it overflows.

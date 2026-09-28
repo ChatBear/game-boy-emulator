@@ -2,7 +2,7 @@ use crate::cpu::Cpu;
 use crate::gb::GameBoy;
 use crate::memory::Memory;
 
-pub type OpCodeExecution = fn(&mut GameBoy, u8) -> u8;
+pub type OpCodeExecution = fn(&mut GameBoy, u8) -> u128;
 
 pub struct OpCodeTable {
     pub opcodes: [OpCodeExecution; 256],
@@ -13,26 +13,20 @@ const FLAG_N: u8 = 0x40;
 const FLAG_H: u8 = 0x20;
 const FLAG_C: u8 = 0x10;
 
-const REG8: [&str; 8] = ["B", "C", "D", "E", "H", "L", "(HL)", "A"];
+// const REG8: [&str; 8] = ["B", "C", "D", "E", "H", "L", "(HL)", "A"];
 
 pub struct Decoded {
     pub operation: &'static str,
     pub register: &'static str,
 }
 
-pub fn decode(code: u8) -> Option<Decoded> {
-    let register = REG8[((code >> 3) & 7) as usize];
-    let operation = match code & 0b1100_0111 {
-        0b0000_0100 => "INC",
-        0b0000_0101 => "DEC",
-        0b0000_0110 => "LD",
-        _ => return None,
-    };
-    Some(Decoded {
-        operation,
-        register,
-    })
-}
+// pub fn decode(code: u8) -> Option<Decoded> {
+//     let register = REG8[((code >> 3) & 7) as usize];
+//     Some(Decoded {
+//         operation,
+//         register,
+//     })
+// }
 
 fn fetch8(cpu: &mut Cpu, mem: &Memory) -> u8 {
     let value = mem.read(cpu.pc);
@@ -46,7 +40,7 @@ fn fetch16(cpu: &mut Cpu, mem: &Memory) -> u16 {
     lo | (hi << 8)
 }
 
-fn push16(cpu: &mut Cpu, mem: &mut Memory, value: u16) {
+pub(crate) fn push16(cpu: &mut Cpu, mem: &mut Memory, value: u16) {
     cpu.sp = cpu.sp.wrapping_sub(1);
     mem.write(cpu.sp, (value >> 8) as u8);
     cpu.sp = cpu.sp.wrapping_sub(1);
@@ -125,41 +119,41 @@ fn set_r16(cpu: &mut Cpu, rp: u8, value: u16) {
     }
 }
 
-fn illegal(_gb: &mut GameBoy, op: u8) -> u8 {
+fn illegal(_gb: &mut GameBoy, op: u8) -> u128 {
     panic!("illegal opcode: 0x{op:02X}");
 }
 
-fn nop(_gb: &mut GameBoy, _op: u8) -> u8 {
+fn nop(_gb: &mut GameBoy, _op: u8) -> u128 {
     4
 }
 
-fn stop(gb: &mut GameBoy, _op: u8) -> u8 {
+fn stop(gb: &mut GameBoy, _op: u8) -> u128 {
     let (cpu, mem) = (&mut gb.cpu, &mut gb.memory);
     let _ = fetch8(cpu, mem);
     cpu.stopped = true;
     4
 }
 
-fn halt(gb: &mut GameBoy, _op: u8) -> u8 {
+fn halt(gb: &mut GameBoy, _op: u8) -> u128 {
     let cpu = &mut gb.cpu;
     cpu.halt = true;
     4
 }
 
-fn di(gb: &mut GameBoy, _op: u8) -> u8 {
+fn di(gb: &mut GameBoy, _op: u8) -> u128 {
     let cpu = &mut gb.cpu;
     cpu.ime = false;
     cpu.ei_pending = false;
     4
 }
 
-fn ei(gb: &mut GameBoy, _op: u8) -> u8 {
+fn ei(gb: &mut GameBoy, _op: u8) -> u128 {
     let cpu = &mut gb.cpu;
     cpu.ei_pending = true;
     4
 }
 
-fn ld_r_r(gb: &mut GameBoy, op: u8) -> u8 {
+fn ld_r_r(gb: &mut GameBoy, op: u8) -> u128 {
     let (cpu, mem) = (&mut gb.cpu, &mut gb.memory);
     let dst = (op >> 3) & 7;
     let src = op & 7;
@@ -168,7 +162,7 @@ fn ld_r_r(gb: &mut GameBoy, op: u8) -> u8 {
     if dst == 6 || src == 6 { 8 } else { 4 }
 }
 
-fn ld_r_n(gb: &mut GameBoy, op: u8) -> u8 {
+fn ld_r_n(gb: &mut GameBoy, op: u8) -> u128 {
     let (cpu, mem) = (&mut gb.cpu, &mut gb.memory);
     let dst = (op >> 3) & 7;
     let value = fetch8(cpu, mem);
@@ -176,14 +170,14 @@ fn ld_r_n(gb: &mut GameBoy, op: u8) -> u8 {
     if dst == 6 { 12 } else { 8 }
 }
 
-fn ld_rr_nn(gb: &mut GameBoy, op: u8) -> u8 {
+fn ld_rr_nn(gb: &mut GameBoy, op: u8) -> u128 {
     let (cpu, mem) = (&mut gb.cpu, &mut gb.memory);
     let value = fetch16(cpu, mem);
     set_r16(cpu, (op >> 4) & 3, value);
     12
 }
 
-fn ld_mem_a(gb: &mut GameBoy, op: u8) -> u8 {
+fn ld_mem_a(gb: &mut GameBoy, op: u8) -> u128 {
     let (cpu, mem) = (&mut gb.cpu, &mut gb.memory);
     let addr = match op {
         0x02 => cpu.get_bc(),
@@ -205,7 +199,7 @@ fn ld_mem_a(gb: &mut GameBoy, op: u8) -> u8 {
     if op == 0xEA { 16 } else { 8 }
 }
 
-fn ld_a_mem(gb: &mut GameBoy, op: u8) -> u8 {
+fn ld_a_mem(gb: &mut GameBoy, op: u8) -> u128 {
     let (cpu, mem) = (&mut gb.cpu, &mut gb.memory);
     let addr = match op {
         0x0A => cpu.get_bc(),
@@ -227,33 +221,33 @@ fn ld_a_mem(gb: &mut GameBoy, op: u8) -> u8 {
     if op == 0xFA { 16 } else { 8 }
 }
 
-fn ldh_n_a(gb: &mut GameBoy, _op: u8) -> u8 {
+fn ldh_n_a(gb: &mut GameBoy, _op: u8) -> u128 {
     let (cpu, mem) = (&mut gb.cpu, &mut gb.memory);
     let n = fetch8(cpu, mem) as u16;
     mem.write(0xFF00 + n, cpu.a);
     12
 }
 
-fn ldh_a_n(gb: &mut GameBoy, _op: u8) -> u8 {
+fn ldh_a_n(gb: &mut GameBoy, _op: u8) -> u128 {
     let (cpu, mem) = (&mut gb.cpu, &mut gb.memory);
     let n = fetch8(cpu, mem) as u16;
     cpu.a = mem.read(0xFF00 + n);
     12
 }
 
-fn ldh_c_a(gb: &mut GameBoy, _op: u8) -> u8 {
+fn ldh_c_a(gb: &mut GameBoy, _op: u8) -> u128 {
     let (cpu, mem) = (&mut gb.cpu, &mut gb.memory);
     mem.write(0xFF00 + cpu.c as u16, cpu.a);
     8
 }
 
-fn ldh_a_c(gb: &mut GameBoy, _op: u8) -> u8 {
+fn ldh_a_c(gb: &mut GameBoy, _op: u8) -> u128 {
     let (cpu, mem) = (&mut gb.cpu, &mut gb.memory);
     cpu.a = mem.read(0xFF00 + cpu.c as u16);
     8
 }
 
-fn ld_nn_sp(gb: &mut GameBoy, _op: u8) -> u8 {
+fn ld_nn_sp(gb: &mut GameBoy, _op: u8) -> u128 {
     let (cpu, mem) = (&mut gb.cpu, &mut gb.memory);
     let addr = fetch16(cpu, mem);
     mem.write(addr, cpu.sp as u8);
@@ -261,7 +255,7 @@ fn ld_nn_sp(gb: &mut GameBoy, _op: u8) -> u8 {
     20
 }
 
-fn ld_sp_hl(gb: &mut GameBoy, _op: u8) -> u8 {
+fn ld_sp_hl(gb: &mut GameBoy, _op: u8) -> u128 {
     let cpu = &mut gb.cpu;
     cpu.sp = cpu.get_hl();
     8
@@ -274,7 +268,7 @@ fn add_sp_offset(cpu: &Cpu, offset: i8) -> (u16, bool, bool) {
     (cpu.sp.wrapping_add(offset as u16), h, c)
 }
 
-fn ld_hl_sp_e(gb: &mut GameBoy, _op: u8) -> u8 {
+fn ld_hl_sp_e(gb: &mut GameBoy, _op: u8) -> u128 {
     let (cpu, mem) = (&mut gb.cpu, &mut gb.memory);
     let e = fetch8(cpu, mem) as i8;
     let (value, h, c) = add_sp_offset(cpu, e);
@@ -283,7 +277,7 @@ fn ld_hl_sp_e(gb: &mut GameBoy, _op: u8) -> u8 {
     12
 }
 
-fn add_sp_e(gb: &mut GameBoy, _op: u8) -> u8 {
+fn add_sp_e(gb: &mut GameBoy, _op: u8) -> u128 {
     let (cpu, mem) = (&mut gb.cpu, &mut gb.memory);
     let e = fetch8(cpu, mem) as i8;
     let (value, h, c) = add_sp_offset(cpu, e);
@@ -310,7 +304,7 @@ fn dec8(cpu: &mut Cpu, value: u8) -> u8 {
     result
 }
 
-fn inc_r(gb: &mut GameBoy, op: u8) -> u8 {
+fn inc_r(gb: &mut GameBoy, op: u8) -> u128 {
     let (cpu, mem) = (&mut gb.cpu, &mut gb.memory);
     let r = (op >> 3) & 7;
     let value = inc8(cpu, r8(cpu, mem, r));
@@ -318,7 +312,7 @@ fn inc_r(gb: &mut GameBoy, op: u8) -> u8 {
     if r == 6 { 12 } else { 4 }
 }
 
-fn dec_r(gb: &mut GameBoy, op: u8) -> u8 {
+fn dec_r(gb: &mut GameBoy, op: u8) -> u128 {
     let (cpu, mem) = (&mut gb.cpu, &mut gb.memory);
     let r = (op >> 3) & 7;
     let value = dec8(cpu, r8(cpu, mem, r));
@@ -326,21 +320,21 @@ fn dec_r(gb: &mut GameBoy, op: u8) -> u8 {
     if r == 6 { 12 } else { 4 }
 }
 
-fn inc_rr(gb: &mut GameBoy, op: u8) -> u8 {
+fn inc_rr(gb: &mut GameBoy, op: u8) -> u128 {
     let cpu = &mut gb.cpu;
     let rp = (op >> 4) & 3;
     set_r16(cpu, rp, r16(cpu, rp).wrapping_add(1));
     8
 }
 
-fn dec_rr(gb: &mut GameBoy, op: u8) -> u8 {
+fn dec_rr(gb: &mut GameBoy, op: u8) -> u128 {
     let cpu = &mut gb.cpu;
     let rp = (op >> 4) & 3;
     set_r16(cpu, rp, r16(cpu, rp).wrapping_sub(1));
     8
 }
 
-fn add_hl_rr(gb: &mut GameBoy, op: u8) -> u8 {
+fn add_hl_rr(gb: &mut GameBoy, op: u8) -> u128 {
     let cpu = &mut gb.cpu;
     let hl = cpu.get_hl();
     let operand = r16(cpu, (op >> 4) & 3);
@@ -407,7 +401,7 @@ fn cp_a(cpu: &mut Cpu, operand: u8) {
     set_flags(cpu, res == 0, true, h, c);
 }
 
-fn alu_r(gb: &mut GameBoy, op: u8) -> u8 {
+fn alu_r(gb: &mut GameBoy, op: u8) -> u128 {
     let (cpu, mem) = (&mut gb.cpu, &mut gb.memory);
     let operand = r8(cpu, mem, op & 7);
     match (op >> 3) & 7 {
@@ -423,7 +417,7 @@ fn alu_r(gb: &mut GameBoy, op: u8) -> u8 {
     if op & 7 == 6 { 8 } else { 4 }
 }
 
-fn alu_n(gb: &mut GameBoy, op: u8) -> u8 {
+fn alu_n(gb: &mut GameBoy, op: u8) -> u128 {
     let (cpu, mem) = (&mut gb.cpu, &mut gb.memory);
     let operand = fetch8(cpu, mem);
     match op {
@@ -495,35 +489,35 @@ fn swap(cpu: &mut Cpu, value: u8) -> u8 {
     result
 }
 
-fn rlca(gb: &mut GameBoy, _op: u8) -> u8 {
+fn rlca(gb: &mut GameBoy, _op: u8) -> u128 {
     let cpu = &mut gb.cpu;
     cpu.a = rlc(cpu, cpu.a);
     cpu.f &= !FLAG_Z;
     4
 }
 
-fn rrca(gb: &mut GameBoy, _op: u8) -> u8 {
+fn rrca(gb: &mut GameBoy, _op: u8) -> u128 {
     let cpu = &mut gb.cpu;
     cpu.a = rrc(cpu, cpu.a);
     cpu.f &= !FLAG_Z;
     4
 }
 
-fn rla(gb: &mut GameBoy, _op: u8) -> u8 {
+fn rla(gb: &mut GameBoy, _op: u8) -> u128 {
     let cpu = &mut gb.cpu;
     cpu.a = rl(cpu, cpu.a);
     cpu.f &= !FLAG_Z;
     4
 }
 
-fn rra(gb: &mut GameBoy, _op: u8) -> u8 {
+fn rra(gb: &mut GameBoy, _op: u8) -> u128 {
     let cpu = &mut gb.cpu;
     cpu.a = rr(cpu, cpu.a);
     cpu.f &= !FLAG_Z;
     4
 }
 
-fn daa(gb: &mut GameBoy, _op: u8) -> u8 {
+fn daa(gb: &mut GameBoy, _op: u8) -> u128 {
     let cpu = &mut gb.cpu;
     let mut adjust = 0u8;
     let n = flag(cpu, FLAG_N);
@@ -544,26 +538,26 @@ fn daa(gb: &mut GameBoy, _op: u8) -> u8 {
     4
 }
 
-fn cpl(gb: &mut GameBoy, _op: u8) -> u8 {
+fn cpl(gb: &mut GameBoy, _op: u8) -> u128 {
     let cpu = &mut gb.cpu;
     cpu.a = !cpu.a;
     set_flags(cpu, flag(cpu, FLAG_Z), true, true, flag(cpu, FLAG_C));
     4
 }
 
-fn scf(gb: &mut GameBoy, _op: u8) -> u8 {
+fn scf(gb: &mut GameBoy, _op: u8) -> u128 {
     let cpu = &mut gb.cpu;
     set_flags(cpu, flag(cpu, FLAG_Z), false, false, true);
     4
 }
 
-fn ccf(gb: &mut GameBoy, _op: u8) -> u8 {
+fn ccf(gb: &mut GameBoy, _op: u8) -> u128 {
     let cpu = &mut gb.cpu;
     set_flags(cpu, flag(cpu, FLAG_Z), false, false, !flag(cpu, FLAG_C));
     4
 }
 
-fn jr(gb: &mut GameBoy, op: u8) -> u8 {
+fn jr(gb: &mut GameBoy, op: u8) -> u128 {
     let (cpu, mem) = (&mut gb.cpu, &mut gb.memory);
     let e = fetch8(cpu, mem) as i8;
     let taken = match op {
@@ -582,7 +576,7 @@ fn jr(gb: &mut GameBoy, op: u8) -> u8 {
     }
 }
 
-fn jp_nn(gb: &mut GameBoy, op: u8) -> u8 {
+fn jp_nn(gb: &mut GameBoy, op: u8) -> u128 {
     let (cpu, mem) = (&mut gb.cpu, &mut gb.memory);
     let addr = fetch16(cpu, mem);
     let taken = match op {
@@ -601,13 +595,13 @@ fn jp_nn(gb: &mut GameBoy, op: u8) -> u8 {
     }
 }
 
-fn jp_hl(gb: &mut GameBoy, _op: u8) -> u8 {
+fn jp_hl(gb: &mut GameBoy, _op: u8) -> u128 {
     let cpu = &mut gb.cpu;
     cpu.pc = cpu.get_hl();
     4
 }
 
-fn call(gb: &mut GameBoy, op: u8) -> u8 {
+fn call(gb: &mut GameBoy, op: u8) -> u128 {
     let (cpu, mem) = (&mut gb.cpu, &mut gb.memory);
     let addr = fetch16(cpu, mem);
     let taken = match op {
@@ -627,7 +621,7 @@ fn call(gb: &mut GameBoy, op: u8) -> u8 {
     }
 }
 
-fn ret(gb: &mut GameBoy, op: u8) -> u8 {
+fn ret(gb: &mut GameBoy, op: u8) -> u128 {
     let (cpu, mem) = (&mut gb.cpu, &mut gb.memory);
     let (check, taken_cycles) = match op {
         0xC9 | 0xD9 => (true, 16),
@@ -648,14 +642,14 @@ fn ret(gb: &mut GameBoy, op: u8) -> u8 {
     }
 }
 
-fn rst(gb: &mut GameBoy, op: u8) -> u8 {
+fn rst(gb: &mut GameBoy, op: u8) -> u128 {
     let (cpu, mem) = (&mut gb.cpu, &mut gb.memory);
     push16(cpu, mem, cpu.pc);
     cpu.pc = (op & 0x38) as u16;
     16
 }
 
-fn push(gb: &mut GameBoy, op: u8) -> u8 {
+fn push(gb: &mut GameBoy, op: u8) -> u128 {
     let (cpu, mem) = (&mut gb.cpu, &mut gb.memory);
     let value = match op {
         0xC5 => cpu.get_bc(),
@@ -668,7 +662,7 @@ fn push(gb: &mut GameBoy, op: u8) -> u8 {
     16
 }
 
-fn pop(gb: &mut GameBoy, op: u8) -> u8 {
+fn pop(gb: &mut GameBoy, op: u8) -> u128 {
     let (cpu, mem) = (&mut gb.cpu, &mut gb.memory);
     let value = pop16(cpu, mem);
     match op {
@@ -681,12 +675,12 @@ fn pop(gb: &mut GameBoy, op: u8) -> u8 {
     12
 }
 
-fn prefix_cb(gb: &mut GameBoy, _op: u8) -> u8 {
+fn prefix_cb(gb: &mut GameBoy, _op: u8) -> u128 {
     let cb = fetch8(&mut gb.cpu, &gb.memory);
     CB_OPCODES[cb as usize](gb, cb)
 }
 
-fn cb_shift(gb: &mut GameBoy, op: u8) -> u8 {
+fn cb_shift(gb: &mut GameBoy, op: u8) -> u128 {
     let (cpu, mem) = (&mut gb.cpu, &mut gb.memory);
     let r = op & 7;
     let value = r8(cpu, mem, r);
@@ -704,7 +698,7 @@ fn cb_shift(gb: &mut GameBoy, op: u8) -> u8 {
     if r == 6 { 16 } else { 8 }
 }
 
-fn cb_bit(gb: &mut GameBoy, op: u8) -> u8 {
+fn cb_bit(gb: &mut GameBoy, op: u8) -> u128 {
     let (cpu, mem) = (&mut gb.cpu, &mut gb.memory);
     let r = op & 7;
     let bit = (op >> 3) & 7;
@@ -713,7 +707,7 @@ fn cb_bit(gb: &mut GameBoy, op: u8) -> u8 {
     if r == 6 { 12 } else { 8 }
 }
 
-fn cb_res(gb: &mut GameBoy, op: u8) -> u8 {
+fn cb_res(gb: &mut GameBoy, op: u8) -> u128 {
     let (cpu, mem) = (&mut gb.cpu, &mut gb.memory);
     let r = op & 7;
     let value = r8(cpu, mem, r) & !(1 << ((op >> 3) & 7));
@@ -721,7 +715,7 @@ fn cb_res(gb: &mut GameBoy, op: u8) -> u8 {
     if r == 6 { 16 } else { 8 }
 }
 
-fn cb_set(gb: &mut GameBoy, op: u8) -> u8 {
+fn cb_set(gb: &mut GameBoy, op: u8) -> u128 {
     let (cpu, mem) = (&mut gb.cpu, &mut gb.memory);
     let r = op & 7;
     let value = r8(cpu, mem, r) | (1 << ((op >> 3) & 7));

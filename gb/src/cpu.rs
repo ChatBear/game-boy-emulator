@@ -16,14 +16,10 @@ pub struct Cpu {
     pub stopped: bool,
     pub ime: bool,
     pub ei_pending: bool,
-    // pending_enable_ime: bool,
-    // ime: bool,
-    // serial_output: String,
+    pub timer_acc: u64,
 }
 
 impl Cpu {
-    const N_CYCLES: [u16; 4] = [1024, 16, 64, 256];
-
     pub fn set_a(&mut self, value: &u8) {
         self.a = *value
     }
@@ -45,6 +41,7 @@ impl Cpu {
             stopped: false,
             ime: false,
             ei_pending: false,
+            timer_acc: 0,
         }
     }
 
